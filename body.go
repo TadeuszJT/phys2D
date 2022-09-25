@@ -1,7 +1,7 @@
 package phys2D
 
 import (
-	geom "github.com/tadeuszjt/geom/32"
+	"github.com/tadeuszjt/geom/64"
 )
 
 type bodySystem struct {
@@ -35,10 +35,5 @@ func (b *bodySystem) Delete(key Key) {
 }
 
 func (b *bodySystem) applyImpulse(index int, mag geom.Ori2) {
-	t := geom.Ori2{
-		mag.X * b.invMass[index].X,
-		mag.Y * b.invMass[index].Y,
-		b.invMass[index].Theta,
-	}
-	b.velocity[index].PlusEquals(t)
+	b.velocity[index].PlusEquals(b.invMass[index].Times(mag))
 }
