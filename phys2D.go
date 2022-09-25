@@ -1,7 +1,7 @@
 package phys2D
 
 import (
-	geom "github.com/tadeuszjt/geom/64"
+	geom "github.com/tadeuszjt/geom/32"
 )
 
 type World struct {

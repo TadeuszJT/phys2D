@@ -1,6 +1,10 @@
 package phys2D
 
-func (w *World) Update(dt float64) {
+import (
+	geom "github.com/tadeuszjt/geom/32"
+)
+
+func (w *World) Update(dt float32) {
 	b := &w.bodySystem
 	j := &w.jointSystem
 
@@ -13,7 +17,7 @@ func (w *World) Update(dt float64) {
 			b.velocity[i].Y += w.Gravity.Y * dt
 		}
 		if b.invMass[i].Theta != 0 {
-			b.velocity[i].Theta += w.Gravity.Theta * dt
+			b.velocity[i].Theta += w.Gravity.Theta * geom.Angle(dt)
 		}
 	}
 
@@ -30,8 +34,8 @@ func (w *World) Update(dt float64) {
 		o1 := b.orientation[index1]
 
 		// joint world positions
-		p0 := o0.Mat33Transform().TimesVec2(joint.offset[0], 1)
-		p1 := o1.Mat33Transform().TimesVec2(joint.offset[1], 1)
+		p0 := o0.Mat3Transform().TimesVec2(joint.offset[0], 1).Vec2()
+		p1 := o1.Mat3Transform().TimesVec2(joint.offset[1], 1).Vec2()
 
 		// joint separation
 		d := p0.Minus(p1)
@@ -39,18 +43,18 @@ func (w *World) Update(dt float64) {
 		// jacobian
 		joint.jacobian[0].X = 2 * d.X
 		joint.jacobian[0].Y = 2 * d.Y
-		joint.jacobian[0].Theta = -d.Cross(p0.Minus(o0.Vec2()))
+		joint.jacobian[0].Theta = geom.Angle(-d.Cross(p0.Minus(o0.Vec2())))
 
 		joint.jacobian[1].X = 2 * -d.X
 		joint.jacobian[1].Y = 2 * -d.Y
-		joint.jacobian[1].Theta = 2 * d.Cross(p1.Minus(o1.Vec2()))
+		joint.jacobian[1].Theta = geom.Angle(2 * d.Cross(p1.Minus(o1.Vec2())))
 
 		// bias
 		joint.bias = (2 / dt) * (d.X*d.X + d.Y*d.Y)
 
 		// J^T * M^-1 * J
-		joint.jmj = joint.jacobian[0].Dot(b.invMass[index0].Times(joint.jacobian[0])) +
-			joint.jacobian[1].Dot(b.invMass[index1].Times(joint.jacobian[1]))
+		joint.jmj = joint.jacobian[0].Vec3().Dot(b.invMass[index0].Vec3().Times(joint.jacobian[0].Vec3())) +
+			joint.jacobian[1].Vec3().Dot(b.invMass[index1].Vec3().Times(joint.jacobian[1].Vec3()))
 	}
 
 	/* Correct velocities */
@@ -61,19 +65,36 @@ func (w *World) Update(dt float64) {
 			vel0 := b.velocity[joint.index[0]]
 			vel1 := b.velocity[joint.index[1]]
 
-			Jv := joint.jacobian[0].Dot(vel0) + joint.jacobian[1].Dot(vel1)
-			lambda := 0.0
+			Jv := joint.jacobian[0].Vec3().Dot(vel0.Vec3()) + joint.jacobian[1].Vec3().Dot(vel1.Vec3())
+			lambda := float32(0.0)
 			if joint.jmj != 0.0 {
 				lambda = -(Jv + joint.bias) / joint.jmj
 			}
 
-			b.applyImpulse(joint.index[0], joint.jacobian[0].Scaled(lambda))
-			b.applyImpulse(joint.index[1], joint.jacobian[1].Scaled(lambda))
+			j0Scaled := geom.Ori2{
+				joint.jacobian[0].X * lambda,
+				joint.jacobian[0].Y * lambda,
+				joint.jacobian[0].Theta * geom.Angle(lambda),
+			}
+			j1Scaled := geom.Ori2{
+				joint.jacobian[1].X * lambda,
+				joint.jacobian[1].Y * lambda,
+				joint.jacobian[1].Theta * geom.Angle(lambda),
+			}
+
+			b.applyImpulse(joint.index[0], j0Scaled)
+			b.applyImpulse(joint.index[1], j1Scaled)
 		}
 	}
 
 	/* Set new positions */
 	for i := range b.orientation {
-		b.orientation[i].PlusEquals(b.velocity[i].Scaled(dt))
+		velScaled := geom.Ori2{
+			b.velocity[i].X * dt,
+			b.velocity[i].Y * dt,
+			b.velocity[i].Theta * geom.Angle(dt),
+		}
+
+		b.orientation[i].PlusEquals(velScaled)
 	}
 }

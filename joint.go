@@ -1,7 +1,7 @@
 package phys2D
 
 import (
-	geom "github.com/tadeuszjt/geom/64"
+	geom "github.com/tadeuszjt/geom/32"
 )
 
 type joint struct {
@@ -11,7 +11,7 @@ type joint struct {
 	// precompute
 	index     [2]int
 	jacobian  [2]geom.Ori2
-	bias, jmj float64
+	bias, jmj float32
 }
 
 type jointSystem struct {
