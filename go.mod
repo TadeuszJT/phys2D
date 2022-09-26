@@ -3,6 +3,7 @@ module github.com/tadeuszjt/phys2D
 go 1.19
 
 require (
+	github.com/tadeuszjt/data v0.0.0-20220926162142-5044fb587593
 	github.com/tadeuszjt/geom v0.0.0-20220925154712-5d6ba697560f
 	github.com/tadeuszjt/gfx v0.0.0-20220925143703-3ad25909edc9
 )

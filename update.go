@@ -1,33 +1,39 @@
 package phys2D
 
-func (w *World) Update(dt float64) {
-	b := &w.bodySystem
-	j := &w.jointSystem
+import (
+	"github.com/tadeuszjt/geom/64"
+)
 
+func (w *World) applyImpulse(index int, mag geom.Ori2) {
+	w.bodies.velocity[index].PlusEquals(w.bodies.invMass[index].Times(mag))
+}
+
+
+func (w *World) Update(dt float64) {
 	/* Apply forces */
-	for i := range b.velocity {
-		if b.invMass[i].X != 0 {
-			b.velocity[i].X += w.Gravity.X * dt
+	for i := range w.bodies.velocity {
+		if w.bodies.invMass[i].X != 0 {
+			w.bodies.velocity[i].X += w.Gravity.X * dt
 		}
-		if b.invMass[i].Y != 0 {
-			b.velocity[i].Y += w.Gravity.Y * dt
+		if w.bodies.invMass[i].Y != 0 {
+			w.bodies.velocity[i].Y += w.Gravity.Y * dt
 		}
-		if b.invMass[i].Theta != 0 {
-			b.velocity[i].Theta += w.Gravity.Theta * dt
+		if w.bodies.invMass[i].Theta != 0 {
+			w.bodies.velocity[i].Theta += w.Gravity.Theta * dt
 		}
 	}
 
 	/* Precompute constraints */
-	for i := range j.joints {
-		joint := &j.joints[i]
-		index0 := b.keyMap.keyToIndex[joint.bodyKey[0]]
-		index1 := b.keyMap.keyToIndex[joint.bodyKey[1]]
+	for i := range w.joints.row {
+		joint := &w.joints.row[i]
+		index0 := w.bodies.keyMap.keyToIndex[joint.bodyKey[0]]
+		index1 := w.bodies.keyMap.keyToIndex[joint.bodyKey[1]]
 
 		joint.index[0] = index0
 		joint.index[1] = index1
 
-		o0 := b.orientation[index0]
-		o1 := b.orientation[index1]
+		o0 := w.bodies.orientation[index0]
+		o1 := w.bodies.orientation[index1]
 
 		// joint world positions
 		p0 := o0.Mat3Transform().TimesVec2(joint.offset[0], 1).Vec2()
@@ -49,17 +55,17 @@ func (w *World) Update(dt float64) {
 		joint.bias = (2 / dt) * (d.X*d.X + d.Y*d.Y)
 
 		// J^T * M^-1 * J
-		joint.jmj = joint.jacobian[0].Dot(b.invMass[index0].Times(joint.jacobian[0])) +
-			joint.jacobian[1].Dot(b.invMass[index1].Times(joint.jacobian[1]))
+		joint.jmj = joint.jacobian[0].Dot(w.bodies.invMass[index0].Times(joint.jacobian[0])) +
+			joint.jacobian[1].Dot(w.bodies.invMass[index1].Times(joint.jacobian[1]))
 	}
 
 	/* Correct velocities */
-	for num := 0; num < 10; num++ {
-		for i := range j.joints {
-			joint := &j.joints[i]
+	for num := 0; num < 1; num++ {
+		for i := range w.joints.row {
+			joint := &w.joints.row[i]
 
-			vel0 := b.velocity[joint.index[0]]
-			vel1 := b.velocity[joint.index[1]]
+			vel0 := w.bodies.velocity[joint.index[0]]
+			vel1 := w.bodies.velocity[joint.index[1]]
 
 			Jv := joint.jacobian[0].Dot(vel0) + joint.jacobian[1].Dot(vel1)
 			lambda := 0.0
@@ -67,13 +73,13 @@ func (w *World) Update(dt float64) {
 				lambda = -(Jv + joint.bias) / joint.jmj
 			}
 
-			b.applyImpulse(joint.index[0], joint.jacobian[0].ScaledBy(lambda))
-			b.applyImpulse(joint.index[1], joint.jacobian[1].ScaledBy(lambda))
+			w.applyImpulse(joint.index[0], joint.jacobian[0].ScaledBy(lambda))
+			w.applyImpulse(joint.index[1], joint.jacobian[1].ScaledBy(lambda))
 		}
 	}
 
 	/* Set new positions */
-	for i := range b.orientation {
-		b.orientation[i].PlusEquals(b.velocity[i].ScaledBy(dt))
+	for i := range w.bodies.orientation {
+		w.bodies.orientation[i].PlusEquals(w.bodies.velocity[i].ScaledBy(dt))
 	}
 }

@@ -2,12 +2,33 @@ package phys2D
 
 import (
 	"github.com/tadeuszjt/geom/64"
+	"github.com/tadeuszjt/data"
 )
+
+type joint struct {
+	bodyKey [2]Key
+	offset  [2]geom.Vec2
+
+	// precompute
+	index     [2]int
+	jacobian  [2]geom.Ori2
+	bias, jmj float64
+}
 
 type World struct {
 	Gravity geom.Ori2
-	bodySystem
-	jointSystem
+
+    bodies struct {
+        orientation data.RowT[geom.Ori2]
+        velocity    data.RowT[geom.Ori2]
+        invMass     data.RowT[geom.Ori2]
+        keyMap
+    }
+
+    joints struct {
+        row data.RowT[joint]
+        keyMap
+    }
 }
 
 func (w *World) AddBody(orientation, mass geom.Ori2) Key {
@@ -22,46 +43,53 @@ func (w *World) AddBody(orientation, mass geom.Ori2) Key {
 		inv.Theta = 1 / mass.Theta
 	}
 
-	return w.bodySystem.Append(orientation, geom.Ori2{}, inv)
+    w.bodies.orientation.Append(orientation)
+    w.bodies.velocity.Append(geom.Ori2{})
+    w.bodies.invMass.Append(inv)
+    return w.bodies.keyMap.Append()
 }
 
 func (w *World) DeleteBody(key Key) {
-	w.bodySystem.Delete(key)
+    index := w.bodies.keyMap.keyToIndex[key]
+    w.bodies.orientation.Delete(index)
+    w.bodies.velocity.Delete(index)
+    w.bodies.invMass.Delete(index)
+	w.bodies.keyMap.Delete(key)
 }
 
 func (w *World) AddJoint(bodyA, bodyB Key, offsetA, offsetB geom.Vec2) Key {
-	return w.jointSystem.Append(joint{
+	w.joints.row.Append(joint{
 		bodyKey: [2]Key{bodyA, bodyB},
 		offset:  [2]geom.Vec2{offsetA, offsetB},
 	})
+    return w.joints.keyMap.Append()
 }
 
 func (w *World) DeleteJoint(key Key) {
-	w.jointSystem.Delete(key)
+    index := w.joints.keyMap.keyToIndex[key]
+	w.joints.row.Delete(index)
+    w.joints.keyMap.Delete(key)
 }
 
 func (w *World) SetOrientations(keys []Key, orientations []geom.Ori2) {
-	b := &w.bodySystem
 	for i := range keys {
-		index := b.keyMap.keyToIndex[keys[i]]
-		b.orientation[index] = orientations[i]
+		index := w.bodies.keyMap.keyToIndex[keys[i]]
+		w.bodies.orientation[index] = orientations[i]
 	}
 }
 
 func (w *World) GetOrientations(keys []Key) []geom.Ori2 {
 	orientations := make([]geom.Ori2, len(keys))
-	b := &w.bodySystem
 	for i := range keys {
-		index := b.keyMap.keyToIndex[keys[i]]
-		orientations[i] = b.orientation[index]
+		index := w.bodies.keyMap.keyToIndex[keys[i]]
+		orientations[i] = w.bodies.orientation[index]
 	}
 	return orientations
 }
 
 func (w *World) SetVelocities(keys []Key, velocities []geom.Ori2) {
-	b := &w.bodySystem
 	for i := range keys {
-		index := b.keyMap.keyToIndex[keys[i]]
-		b.velocity[index] = velocities[i]
+		index := w.bodies.keyMap.keyToIndex[keys[i]]
+		w.bodies.velocity[index] = velocities[i]
 	}
 }

@@ -13,13 +13,14 @@ var (
 	world phys2D.World
     rectSize = geom.Rect{geom.Vec2{-10, -10}, geom.Vec2{10, 10}}
     rectKeys []phys2D.Key
-    numRects = 7
+    jointKeys []phys2D.Key
+    numRects = 16
 )
 
 func setup(w *gfx.Win) error {
     for i := 0; i < numRects; i++ {
         mass := phys2D.MassRectangle(rectSize)
-        if i == 0 {
+        if i == 0 || i == (numRects - 1) {
             mass = geom.Ori2{0, 0, 0}
         }
 
@@ -31,9 +32,15 @@ func setup(w *gfx.Win) error {
 
         rectKeys = append(rectKeys, world.AddBody(ori, mass))
         if i > 0 {
-            world.AddJoint(rectKeys[i-1], rectKeys[i], geom.Vec2{10, 10}, geom.Vec2{-10, -10})
+            jointKeys = append(
+                jointKeys,
+                world.AddJoint(rectKeys[i-1], rectKeys[i], geom.Vec2{10, 10}, geom.Vec2{-10, -10}),
+            )
         }
     }
+
+
+    world.DeleteJoint(jointKeys[len(jointKeys) / 2])
 
     world.Gravity = geom.Ori2{0, 10, 0}
 
@@ -53,22 +60,10 @@ func draw(w* gfx.Win, c gfx.Canvas) {
         gfx.DrawSprite(c, orisConverted[i], geom32.RectCentred(20, 20), gfx.Red, nil, nil)
     }
 
-    world.Update(1 / 60.) // 60 fps
-    world.Update(1 / 60.) // 60 fps
-    world.Update(1 / 60.) // 60 fps
-    world.Update(1 / 60.) // 60 fps
-    world.Update(1 / 60.) // 60 fps
-    world.Update(1 / 60.) // 60 fps
-    world.Update(1 / 60.) // 60 fps
-    world.Update(1 / 60.) // 60 fps
-    world.Update(1 / 60.) // 60 fps
-    world.Update(1 / 60.) // 60 fps
-    world.Update(1 / 60.) // 60 fps
-    world.Update(1 / 60.) // 60 fps
-    world.Update(1 / 60.) // 60 fps
-    world.Update(1 / 60.) // 60 fps
-    world.Update(1 / 60.) // 60 fps
-    world.Update(1 / 60.) // 60 fps
+    world.Update(4 / 60.) // 60 fps
+    world.Update(4 / 60.) // 60 fps
+    world.Update(4 / 60.) // 60 fps
+    world.Update(4 / 60.) // 60 fps
 }
 
 func main() {
