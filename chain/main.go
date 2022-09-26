@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	world phys2D.World
+	world = phys2D.NewWorld()
     rectSize = geom.Rect{geom.Vec2{-10, -10}, geom.Vec2{10, 10}}
     rectKeys []phys2D.Key
     jointKeys []phys2D.Key
@@ -41,8 +41,6 @@ func setup(w *gfx.Win) error {
 
 
     world.DeleteJoint(jointKeys[len(jointKeys) / 2])
-
-    world.Gravity = geom.Ori2{0, 10, 0}
 
     return nil
 }

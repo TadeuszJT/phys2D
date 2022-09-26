@@ -19,16 +19,32 @@ type World struct {
 	Gravity geom.Ori2
 
     bodies struct {
+        data.Table
         orientation data.RowT[geom.Ori2]
         velocity    data.RowT[geom.Ori2]
         invMass     data.RowT[geom.Ori2]
-        keyMap
+
+        km keyMap
     }
 
     joints struct {
         row data.RowT[joint]
         keyMap
     }
+}
+
+func NewWorld() *World {
+    world := World {
+        Gravity: geom.Ori2{0, 10, 0},
+    }
+
+    world.bodies.Table = data.Table{
+        &world.bodies.orientation,
+        &world.bodies.velocity,
+        &world.bodies.invMass,
+    }
+
+    return &world
 }
 
 func (w *World) AddBody(orientation, mass geom.Ori2) Key {
@@ -43,18 +59,15 @@ func (w *World) AddBody(orientation, mass geom.Ori2) Key {
 		inv.Theta = 1 / mass.Theta
 	}
 
-    w.bodies.orientation.Append(orientation)
-    w.bodies.velocity.Append(geom.Ori2{})
-    w.bodies.invMass.Append(inv)
-    return w.bodies.keyMap.Append()
+    w.bodies.Append(orientation, geom.Ori2{}, inv)
+
+    return w.bodies.km.Append()
 }
 
 func (w *World) DeleteBody(key Key) {
-    index := w.bodies.keyMap.keyToIndex[key]
-    w.bodies.orientation.Delete(index)
-    w.bodies.velocity.Delete(index)
-    w.bodies.invMass.Delete(index)
-	w.bodies.keyMap.Delete(key)
+    index := w.bodies.km.keyToIndex[key]
+    w.bodies.Delete(index)
+	w.bodies.km.Delete(key)
 }
 
 func (w *World) AddJoint(bodyA, bodyB Key, offsetA, offsetB geom.Vec2) Key {
@@ -73,7 +86,7 @@ func (w *World) DeleteJoint(key Key) {
 
 func (w *World) SetOrientations(keys []Key, orientations []geom.Ori2) {
 	for i := range keys {
-		index := w.bodies.keyMap.keyToIndex[keys[i]]
+		index := w.bodies.km.keyToIndex[keys[i]]
 		w.bodies.orientation[index] = orientations[i]
 	}
 }
@@ -81,7 +94,7 @@ func (w *World) SetOrientations(keys []Key, orientations []geom.Ori2) {
 func (w *World) GetOrientations(keys []Key) []geom.Ori2 {
 	orientations := make([]geom.Ori2, len(keys))
 	for i := range keys {
-		index := w.bodies.keyMap.keyToIndex[keys[i]]
+		index := w.bodies.km.keyToIndex[keys[i]]
 		orientations[i] = w.bodies.orientation[index]
 	}
 	return orientations
@@ -89,7 +102,7 @@ func (w *World) GetOrientations(keys []Key) []geom.Ori2 {
 
 func (w *World) SetVelocities(keys []Key, velocities []geom.Ori2) {
 	for i := range keys {
-		index := w.bodies.keyMap.keyToIndex[keys[i]]
+		index := w.bodies.km.keyToIndex[keys[i]]
 		w.bodies.velocity[index] = velocities[i]
 	}
 }
