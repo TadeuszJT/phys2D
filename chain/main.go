@@ -5,6 +5,7 @@ import (
 	"github.com/tadeuszjt/geom/64"
 	"github.com/tadeuszjt/phys2D"
     "github.com/tadeuszjt/gfx"
+    "github.com/tadeuszjt/data"
 
     geom32 "github.com/tadeuszjt/geom/32"
 )
@@ -12,8 +13,8 @@ import (
 var (
 	world = phys2D.NewWorld()
     rectSize = geom.Rect{geom.Vec2{-10, -10}, geom.Vec2{10, 10}}
-    rectKeys []phys2D.Key
-    jointKeys []phys2D.Key
+    rectKeys []data.Key
+    jointKeys []data.Key
     numRects = 16
 )
 

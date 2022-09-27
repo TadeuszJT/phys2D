@@ -26,8 +26,8 @@ func (w *World) Update(dt float64) {
 	/* Precompute constraints */
 	for i := range w.joints.row {
 		joint := &w.joints.row[i]
-		index0 := w.bodies.km.keyToIndex[joint.bodyKey[0]]
-		index1 := w.bodies.km.keyToIndex[joint.bodyKey[1]]
+		index0 := w.bodies.KeyToIndex[joint.bodyKey[0]]
+		index1 := w.bodies.KeyToIndex[joint.bodyKey[1]]
 
 		joint.index[0] = index0
 		joint.index[1] = index1

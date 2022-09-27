@@ -6,7 +6,7 @@ import (
 )
 
 type joint struct {
-	bodyKey [2]Key
+	bodyKey [2]data.Key
 	offset  [2]geom.Vec2
 
 	// precompute
@@ -19,17 +19,15 @@ type World struct {
 	Gravity geom.Ori2
 
     bodies struct {
-        data.Table
+        data.KeyMap
         orientation data.RowT[geom.Ori2]
         velocity    data.RowT[geom.Ori2]
         invMass     data.RowT[geom.Ori2]
-
-        km keyMap
     }
 
     joints struct {
+        data.KeyMap
         row data.RowT[joint]
-        keyMap
     }
 }
 
@@ -38,16 +36,22 @@ func NewWorld() *World {
         Gravity: geom.Ori2{0, 10, 0},
     }
 
-    world.bodies.Table = data.Table{
-        &world.bodies.orientation,
-        &world.bodies.velocity,
-        &world.bodies.invMass,
+    world.bodies.KeyMap = data.KeyMap{
+        Row: &data.Table{
+            &world.bodies.orientation,
+            &world.bodies.velocity,
+            &world.bodies.invMass,
+        },
+    }
+
+    world.joints.KeyMap = data.KeyMap{
+        Row: &world.joints.row,
     }
 
     return &world
 }
 
-func (w *World) AddBody(orientation, mass geom.Ori2) Key {
+func (w *World) AddBody(orientation, mass geom.Ori2) data.Key {
 	inv := mass
 	if mass.X != 0 {
 		inv.X = 1 / mass.X
@@ -59,50 +63,43 @@ func (w *World) AddBody(orientation, mass geom.Ori2) Key {
 		inv.Theta = 1 / mass.Theta
 	}
 
-    w.bodies.Append(orientation, geom.Ori2{}, inv)
-
-    return w.bodies.km.Append()
+    return w.bodies.Append(orientation, geom.Ori2{}, inv)
 }
 
-func (w *World) DeleteBody(key Key) {
-    index := w.bodies.km.keyToIndex[key]
-    w.bodies.Delete(index)
-	w.bodies.km.Delete(key)
+func (w *World) DeleteBody(key data.Key) {
+    w.bodies.Delete(key)
 }
 
-func (w *World) AddJoint(bodyA, bodyB Key, offsetA, offsetB geom.Vec2) Key {
-	w.joints.row.Append(joint{
-		bodyKey: [2]Key{bodyA, bodyB},
+func (w *World) AddJoint(bodyA, bodyB data.Key, offsetA, offsetB geom.Vec2) data.Key {
+	return w.joints.Append(joint{
+		bodyKey: [2]data.Key{bodyA, bodyB},
 		offset:  [2]geom.Vec2{offsetA, offsetB},
 	})
-    return w.joints.keyMap.Append()
 }
 
-func (w *World) DeleteJoint(key Key) {
-    index := w.joints.keyMap.keyToIndex[key]
-	w.joints.row.Delete(index)
-    w.joints.keyMap.Delete(key)
+func (w *World) DeleteJoint(key data.Key) {
+    w.joints.Delete(key)
 }
 
-func (w *World) SetOrientations(keys []Key, orientations []geom.Ori2) {
+func (w *World) SetOrientations(keys []data.Key, orientations []geom.Ori2) {
 	for i := range keys {
-		index := w.bodies.km.keyToIndex[keys[i]]
+		index := w.bodies.KeyToIndex[keys[i]]
 		w.bodies.orientation[index] = orientations[i]
 	}
 }
 
-func (w *World) GetOrientations(keys []Key) []geom.Ori2 {
+func (w *World) GetOrientations(keys []data.Key) []geom.Ori2 {
 	orientations := make([]geom.Ori2, len(keys))
 	for i := range keys {
-		index := w.bodies.km.keyToIndex[keys[i]]
+		index := w.bodies.KeyToIndex[keys[i]]
 		orientations[i] = w.bodies.orientation[index]
 	}
 	return orientations
 }
 
-func (w *World) SetVelocities(keys []Key, velocities []geom.Ori2) {
+func (w *World) SetVelocities(keys []data.Key, velocities []geom.Ori2) {
 	for i := range keys {
-		index := w.bodies.km.keyToIndex[keys[i]]
+		index := w.bodies.KeyToIndex[keys[i]]
 		w.bodies.velocity[index] = velocities[i]
 	}
 }
