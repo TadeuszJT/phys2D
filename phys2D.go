@@ -88,7 +88,7 @@ func (w *World) SetOrientations(keys []data.Key, orientations []geom.Ori2) {
 	}
 }
 
-func (w *World) GetOrientations(keys []data.Key) []geom.Ori2 {
+func (w *World) GetOrientations(keys ...data.Key) []geom.Ori2 {
 	orientations := make([]geom.Ori2, len(keys))
 	for i := range keys {
 		index := w.bodies.KeyToIndex[keys[i]]
