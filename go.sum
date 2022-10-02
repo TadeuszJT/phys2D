@@ -16,6 +16,8 @@ github.com/tadeuszjt/data v0.0.0-20220927083651-5eadeac73699 h1:OTNleMrzD9Z1zV4C
 github.com/tadeuszjt/data v0.0.0-20220927083651-5eadeac73699/go.mod h1:guBua/Dks0yADUydaHyrvM1splwfkasn2EvmuyaW/UE=
 github.com/tadeuszjt/geom v0.0.0-20220925154712-5d6ba697560f h1:asBuopEvT8D2bj1VNRa7p1XHI5eoVaWjXCqPZTPgxJc=
 github.com/tadeuszjt/geom v0.0.0-20220925154712-5d6ba697560f/go.mod h1:320Q0rNzJlXOHStzQnuWdBvLvhvufan2Psyt+ou3T0Y=
+github.com/tadeuszjt/geom v0.0.0-20220929190129-09a4904dc7cd h1:bPFPQ9QzkgXAZN4UCb0hUJ0nwtYGj/8rvU92Io6WtAg=
+github.com/tadeuszjt/geom v0.0.0-20220929190129-09a4904dc7cd/go.mod h1:320Q0rNzJlXOHStzQnuWdBvLvhvufan2Psyt+ou3T0Y=
 github.com/tadeuszjt/gfx v0.0.0-20220925143703-3ad25909edc9 h1:s+Y1PgvxWeMqmKFfWJcidRtHnzdzJXFyOyYeBRQzmF8=
 github.com/tadeuszjt/gfx v0.0.0-20220925143703-3ad25909edc9/go.mod h1:sFPtrMF+qH5YtzPOvX9xrjJKQA3jCSgXlDhnxwd083I=
 golang.org/x/image v0.0.0-20190321063152-3fc05d484e9f/go.mod h1:kZ7UVZpmo3dzQBMxlp+ypCbDeSB+sBbTgSJuh5dn5js=

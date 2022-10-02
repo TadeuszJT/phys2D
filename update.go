@@ -23,6 +23,24 @@ func (w *World) Update(dt float64) {
 		}
 	}
 
+    /* Apply Drag */
+    /*
+
+                --------> X
+                |
+                |
+                |
+                V
+                Y
+
+    */
+
+
+
+    for i := range w.bodies.velocity {
+        w.bodies.velocity[i] = w.bodies.velocity[i].ScaledBy(1 - 0.1 * dt)
+    }
+
 	/* Precompute constraints */
 	for i := range w.joints.row {
 		joint := &w.joints.row[i]
@@ -60,7 +78,7 @@ func (w *World) Update(dt float64) {
 	}
 
 	/* Correct velocities */
-	for num := 0; num < 1; num++ {
+	for num := 0; num < 10; num++ {
 		for i := range w.joints.row {
 			joint := &w.joints.row[i]
 

@@ -94,16 +94,30 @@ func mouse(w *gfx.Win, ev gfx.MouseEvent) {
 			if e.Action == glfw.Press {
 				mouseHeld = true
 
-				//                for i := range rectKeys {
-				//                    ori := phys2D.GetOrientations(rectKeys[i])
-				//                }
+                for i := range rects.physKeys {
+                    ori := world.GetOrientations(rects.physKeys[i])
+                    ori32 := geom32.Ori2{float32(ori[0].X), float32(ori[0].Y), geom32.Angle(ori[0].Theta) }
+
+                    trans := geom32.Mat3Translation(ori32.Vec2().ScaledBy(-1))
+                    rot   := geom32.Mat3Rotation(ori32.Theta * (-1))
+                    mat := rot.Product(trans)
+
+                    mousePos32 := geom32.Vec2{float32(mousePos.X), float32(mousePos.Y)}
+
+                    v := mat.TimesVec2(mousePos32, 1).Vec2()
+
+                    v64 := geom.Vec2{float64(v.X), float64(v.Y)}
+
+                    if rectSize.Contains(v64) {
+                        rects.colours[i] = gfx.Red
+                    }
+                }
+
 
 			} else if e.Action == glfw.Release {
 				mouseHeld = false
 			}
 		}
-
-		fmt.Println(mouseHeld)
 
 	default:
 	}
