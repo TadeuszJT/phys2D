@@ -1,13 +1,12 @@
 package phys2D
 
 import (
-	"github.com/tadeuszjt/geom/64"
+	"github.com/tadeuszjt/geom/generic"
 )
 
-func (w *World) applyImpulse(index int, mag geom.Ori2) {
+func (w *World) applyImpulse(index int, mag geom.Ori2[float64]) {
 	w.bodies.velocity[index].PlusEquals(w.bodies.invMass[index].Times(mag))
 }
-
 
 func (w *World) Update(dt float64) {
 	/* Apply forces */
@@ -23,23 +22,21 @@ func (w *World) Update(dt float64) {
 		}
 	}
 
-    /* Apply Drag */
-    /*
+	/* Apply Drag */
+	/*
 
-                --------> X
-                |
-                |
-                |
-                V
-                Y
+	   --------> X
+	   |
+	   |
+	   |
+	   V
+	   Y
 
-    */
+	*/
 
-
-
-    for i := range w.bodies.velocity {
-        w.bodies.velocity[i] = w.bodies.velocity[i].ScaledBy(1 - 0.1 * dt)
-    }
+	for i := range w.bodies.velocity {
+		w.bodies.velocity[i] = w.bodies.velocity[i].ScaledBy(1 - 0.1*dt)
+	}
 
 	/* Precompute constraints */
 	for i := range w.joints.row {
