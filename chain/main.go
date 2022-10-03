@@ -4,17 +4,16 @@ import (
 	"fmt"
 	"github.com/go-gl/glfw/v3.3/glfw"
 	"github.com/tadeuszjt/data"
-	"github.com/tadeuszjt/geom/64"
+	geom64 "github.com/tadeuszjt/geom/64"
 	"github.com/tadeuszjt/gfx"
-	phys2D "github.com/tadeuszjt/phys2D"
-
-	geom32 "github.com/tadeuszjt/geom/32"
+	"github.com/tadeuszjt/phys2D"
+	"github.com/tadeuszjt/geom/generic"
 )
 
 var (
 	world = phys2D.NewWorld()
 
-	rectSize = geom.Rect{geom.Vec2{-10, -10}, geom.Vec2{10, 10}}
+	rectSize = geom.RectCentred[float32](20, 20)
 	numRects = 10
 
     rects struct {
@@ -26,7 +25,7 @@ var (
 
 	jointKeys []data.Key
 
-	mousePos  = geom.Vec2{}
+	mousePos  = geom.Vec2[float32]{}
 	mouseHeld = false
 )
 
@@ -36,12 +35,18 @@ func init() {
 
 func setup(w *gfx.Win) error {
 	for i := 0; i < numRects; i++ {
-		mass := phys2D.MassRectangle(rectSize)
+        rectSize64 := geom64.Rect{
+            geom64.Vec2{float64(rectSize.Min.X), float64(rectSize.Min.Y)},
+            geom64.Vec2{float64(rectSize.Max.X), float64(rectSize.Max.Y)},
+        }
+
+
+		mass := phys2D.MassRectangle(rectSize64)
 		if i == 0 || i == (numRects-1) {
-			mass = geom.Ori2{0, 0, 0}
+			mass = geom64.Ori2{0, 0, 0}
 		}
 
-		ori := geom.Ori2{ 300 + float64(i)*20, 60 + float64(i)*20, 0 }
+		ori := geom64.Ori2{ 300 + float64(i)*20, 60 + float64(i)*20, 0 }
 
         rectPhysKey := world.AddBody(ori, mass)
 
@@ -53,8 +58,8 @@ func setup(w *gfx.Win) error {
 				world.AddJoint(
                     rects.physKeys[i-1],
                     rects.physKeys[i],
-                    rectSize.Max,
-                    rectSize.Min,
+                    rectSize64.Max,
+                    rectSize64.Min,
                 ),
 			)
 		}
@@ -68,13 +73,9 @@ func setup(w *gfx.Win) error {
 func draw(w *gfx.Win, c gfx.Canvas) {
     for i := range rects.physKeys {
         ori := world.GetOrientations(rects.physKeys[i])
-        ori32 := geom32.Ori2{float32(ori[0].X), float32(ori[0].Y), geom32.Angle(ori[0].Theta) }
+        ori32 := geom.Ori2[float32]{float32(ori[0].X), float32(ori[0].Y), float32(ori[0].Theta) }
         colour := rects.colours[i]
-		rect32 := geom32.Rect{
-			geom32.Vec2{float32(rectSize.Min.X), float32(rectSize.Min.Y)},
-			geom32.Vec2{float32(rectSize.Max.X), float32(rectSize.Max.Y)},
-		}
-		gfx.DrawSprite(c, ori32, rect32, colour, nil, nil)
+		gfx.DrawSprite(c, ori32, rectSize, colour, nil, nil)
     }
 
 
@@ -87,8 +88,7 @@ func draw(w *gfx.Win, c gfx.Canvas) {
 func mouse(w *gfx.Win, ev gfx.MouseEvent) {
 	switch e := ev.(type) {
 	case gfx.MouseMove:
-		mousePos.X = float64(e.Position.X)
-		mousePos.Y = float64(e.Position.Y)
+        mousePos = e.Position
 	case gfx.MouseButton:
 		if e.Button == glfw.MouseButtonLeft {
 			if e.Action == glfw.Press {
@@ -96,19 +96,15 @@ func mouse(w *gfx.Win, ev gfx.MouseEvent) {
 
                 for i := range rects.physKeys {
                     ori := world.GetOrientations(rects.physKeys[i])
-                    ori32 := geom32.Ori2{float32(ori[0].X), float32(ori[0].Y), geom32.Angle(ori[0].Theta) }
+                    ori32 := geom.Ori2[float32]{float32(ori[0].X), float32(ori[0].Y), float32(ori[0].Theta) }
 
-                    trans := geom32.Mat3Translation(ori32.Vec2().ScaledBy(-1))
-                    rot   := geom32.Mat3Rotation(ori32.Theta * (-1))
+                    trans := geom.Mat3Translation(ori32.Vec2().ScaledBy(-1))
+                    rot   := geom.Mat3Rotation(ori32.Theta * (-1))
                     mat := rot.Product(trans)
 
-                    mousePos32 := geom32.Vec2{float32(mousePos.X), float32(mousePos.Y)}
+                    v := mat.TimesVec2(mousePos, 1).Vec2()
 
-                    v := mat.TimesVec2(mousePos32, 1).Vec2()
-
-                    v64 := geom.Vec2{float64(v.X), float64(v.Y)}
-
-                    if rectSize.Contains(v64) {
+                    if rectSize.Contains(v) {
                         rects.colours[i] = gfx.Red
                     }
                 }
@@ -122,12 +118,6 @@ func mouse(w *gfx.Win, ev gfx.MouseEvent) {
 	default:
 	}
 }
-
-//type MouseButton struct {
-//	Button glfw.MouseButton
-//	Action glfw.Action
-//	Mods   glfw.ModifierKey
-//}
 
 func main() {
 	gfx.RunWindow(gfx.WinConfig{
