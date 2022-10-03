@@ -14,40 +14,39 @@ var (
 
 	rectSize = geom.RectCentred[float32](20, 20)
 	numRects = 10
+	timeStep = 4. / 60.
 
 	rects struct {
-		data.Table
+		data.KeyMap
 		physKeys data.RowT[data.Key]
 		colours  data.RowT[gfx.Colour]
 	}
 
 	jointKeys []data.Key
+	rectKeys  []data.Key
 
-	mousePos  = geom.Vec2[float32]{}
-	mouseHeld = false
+	mousePos = geom.Vec2[float32]{}
+	rectHeld = data.Key(-1)
 )
 
 func init() {
-	rects.Table = data.Table{&rects.physKeys, &rects.colours}
+	rects.KeyMap.Row = data.Table{&rects.physKeys, &rects.colours}
 }
 
 func setup(w *gfx.Win) error {
 	for i := 0; i < numRects; i++ {
-		rectSize64 := geom.Rect[float64]{
-			geom.Vec2Convert[float32, float64](rectSize.Min),
-			geom.Vec2Convert[float32, float64](rectSize.Max),
-		}
+		rectSize64 := geom.RectConvert[float32, float64](rectSize)
 
 		mass := phys2D.MassRectangle(rectSize64)
 		if i == 0 || i == (numRects-1) {
 			mass = geom.Ori2[float64]{0, 0, 0}
 		}
-
 		ori := geom.Ori2[float64]{300 + float64(i)*20, 60 + float64(i)*20, 0}
 
-		rectPhysKey := world.AddBody(ori, mass)
-
-		rects.Append(rectPhysKey, gfx.ColourRand())
+		rectKeys = append(
+			rectKeys,
+			rects.Append(world.AddBody(ori, mass), gfx.ColourRand()),
+		)
 
 		if i > 0 {
 			jointKeys = append(
@@ -75,10 +74,19 @@ func draw(w *gfx.Win, c gfx.Canvas) {
 		gfx.DrawSprite(c, ori32, rectSize, colour, nil, nil)
 	}
 
-	world.Update(4 / 60.) // 60 fps
-	world.Update(4 / 60.) // 60 fps
-	world.Update(4 / 60.) // 60 fps
-	world.Update(4 / 60.) // 60 fps
+	if rectHeld != (-1) {
+		index := rects.KeyMap.KeyToIndex[rectHeld]
+		ori1 := world.GetOrientations(rects.physKeys[index])
+
+		mousePos64 := geom.Vec2Convert[float32, float64](mousePos)
+		delta := mousePos64.Minus(ori1[0].Vec2())
+		deltaOri2 := geom.Ori2[float64]{delta.X, delta.Y, 0}
+
+		world.ApplyImpulse(rects.physKeys[index], deltaOri2.ScaledBy(10))
+
+	}
+
+	world.Update(timeStep)
 }
 
 func mouse(w *gfx.Win, ev gfx.MouseEvent) {
@@ -88,9 +96,10 @@ func mouse(w *gfx.Win, ev gfx.MouseEvent) {
 	case gfx.MouseButton:
 		if e.Button == glfw.MouseButtonLeft {
 			if e.Action == glfw.Press {
-				mouseHeld = true
 
-				for i := range rects.physKeys {
+				for _, key := range rectKeys {
+					i := rects.KeyMap.KeyToIndex[key]
+
 					ori := world.GetOrientations(rects.physKeys[i])
 					ori32 := geom.Ori2Convert[float64, float32](ori[0])
 
@@ -101,12 +110,12 @@ func mouse(w *gfx.Win, ev gfx.MouseEvent) {
 					v := mat.TimesVec2(mousePos, 1).Vec2()
 
 					if rectSize.Contains(v) {
-						rects.colours[i] = gfx.Red
+						rectHeld = key
 					}
 				}
 
 			} else if e.Action == glfw.Release {
-				mouseHeld = false
+				rectHeld = data.Key(-1)
 			}
 		}
 

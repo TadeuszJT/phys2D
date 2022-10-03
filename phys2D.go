@@ -81,6 +81,11 @@ func (w *World) DeleteJoint(key data.Key) {
 	w.joints.Delete(key)
 }
 
+func (w *World) ApplyImpulse(key data.Key, mag geom.Ori2[float64]) {
+    index := w.bodies.KeyMap.KeyToIndex[key]
+    w.applyImpulse(index, mag)
+}
+
 func (w *World) SetOrientations(keys []data.Key, orientations []geom.Ori2[float64]) {
 	for i := range keys {
 		index := w.bodies.KeyToIndex[keys[i]]
