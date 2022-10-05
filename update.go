@@ -39,10 +39,10 @@ func (w *World) Update(dt float64) {
 	}
 
 	/* Precompute constraints */
-	for i := range w.joints.row {
-		joint := &w.joints.row[i]
-		index0 := w.bodies.KeyToIndex[joint.bodyKey[0]]
-		index1 := w.bodies.KeyToIndex[joint.bodyKey[1]]
+	for i := range w.joints {
+		joint := &w.joints[i]
+		index0 := w.bodies.GetIndex(joint.bodyKey[0])
+		index1 := w.bodies.GetIndex(joint.bodyKey[1])
 
 		joint.index[0] = index0
 		joint.index[1] = index1
@@ -76,8 +76,8 @@ func (w *World) Update(dt float64) {
 
 	/* Correct velocities */
 	for num := 0; num < 10; num++ {
-		for i := range w.joints.row {
-			joint := &w.joints.row[i]
+		for i := range w.joints {
+			joint := &w.joints[i]
 
 			vel0 := w.bodies.velocity[joint.index[0]]
 			vel1 := w.bodies.velocity[joint.index[1]]

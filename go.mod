@@ -4,8 +4,8 @@ go 1.19
 
 require (
 	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20220806181222-55e207c401ad
-	github.com/tadeuszjt/data v0.0.0-20220927083651-5eadeac73699
-	github.com/tadeuszjt/geom v0.0.0-20221003153229-ca16ed1acb1b
+	github.com/tadeuszjt/data v0.0.0-20221004125058-115b38c2f40e
+	github.com/tadeuszjt/geom v0.0.0-20221005104527-db4922c978da
 	github.com/tadeuszjt/gfx v0.0.0-20221003103944-1068b919dfe7
 )
 
