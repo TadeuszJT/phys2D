@@ -1,6 +1,7 @@
 package phys2D
 
 import (
+	//"fmt"
 	"github.com/tadeuszjt/geom/generic"
 )
 
@@ -23,19 +24,35 @@ func (w *World) Update(dt float64) {
 	}
 
 	/* Apply Drag */
-	/*
+	for i := range w.dragPlates {
+		plate := &w.dragPlates[i]
+		bodyIndex := w.bodies.GetIndex(plate.bodyKey)
+		bodyOrientation := w.bodies.orientation[bodyIndex]
+		bodyVelocity := w.bodies.velocity[bodyIndex]
 
-	   --------> X
-	   |
-	   |
-	   |
-	   V
-	   Y
+		delta := plate.point[1].Minus(plate.point[0])
+		surface := delta.Perpendicular().RotatedBy(bodyOrientation.Theta)
 
-	*/
+		// simulate two plates to include an approximation to rotational drag
+		points := [2]geom.Vec2[float64]{
+			plate.point[0].Plus(delta.ScaledBy(0.25)),
+			plate.point[1].Minus(delta.ScaledBy(0.25)),
+		}
 
-	for i := range w.bodies.velocity {
-		w.bodies.velocity[i] = w.bodies.velocity[i].ScaledBy(1 - 0.1*dt)
+		for _, p := range points {
+			offset := p.RotatedBy(bodyOrientation.Theta)
+			plateVelFromRot := offset.Perpendicular().ScaledBy(bodyVelocity.Theta)
+			plateVel := bodyVelocity.Vec2().Plus(plateVelFromRot)
+
+			// Fd = 1/2 * v^2 * p * Cd * A
+			scalar := plateVel.Dot(surface.Normal()) * 0.5 * w.AirDensity * plateVel.Len() * 0.5
+			force := surface.ScaledBy(scalar)
+			if force.Dot(plateVel) > 0 {
+				force = force.ScaledBy(-1)
+			}
+
+			w.ApplyImpulse(plate.bodyKey, force, offset, dt)
+		}
 	}
 
 	/* Precompute constraints */

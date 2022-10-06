@@ -1,7 +1,6 @@
 package phys2D
 
 import (
-	"fmt"
 	"github.com/tadeuszjt/data"
 	"github.com/tadeuszjt/geom/generic"
 )
@@ -16,8 +15,14 @@ type joint struct {
 	bias, jmj float64
 }
 
+type dragPlate struct {
+	bodyKey data.Key
+	point   [2]geom.Vec2[float64]
+}
+
 type World struct {
-	Gravity geom.Ori2[float64]
+	Gravity    geom.Ori2[float64]
+	AirDensity float64
 
 	bodies struct {
 		data.KeyMap
@@ -26,12 +31,14 @@ type World struct {
 		invMass     data.RowT[geom.Ori2[float64]]
 	}
 
-	joints data.RowT[joint]
+	joints     data.RowT[joint]
+	dragPlates data.RowT[dragPlate]
 }
 
 func NewWorld() *World {
 	world := World{
-		Gravity: geom.Ori2[float64]{0, 10, 0},
+		Gravity:    geom.Ori2[float64]{0, 10, 0},
+		AirDensity: 1,
 	}
 
 	world.bodies.KeyMap = data.MakeKeyMap(data.Table{
@@ -55,15 +62,19 @@ func (w *World) AddBody(orientation, mass geom.Ori2[float64]) data.Key {
 		inv.Theta = 1 / mass.Theta
 	}
 
-	fmt.Println("body added, mass:", mass)
-
 	return w.bodies.Append(orientation, geom.Ori2[float64]{}, inv)
 }
 
 func (w *World) DeleteBody(key data.Key) {
-	for i := 0; i < len(w.joints); i++ {
+	for i := 0; i < w.joints.Len(); i++ {
 		if w.joints[i].bodyKey[0] == key || w.joints[i].bodyKey[1] == key {
 			w.joints.Delete(i)
+			i--
+		}
+	}
+	for i := 0; i < w.dragPlates.Len(); i++ {
+		if w.dragPlates[i].bodyKey == key {
+			w.dragPlates.Delete(i)
 			i--
 		}
 	}
@@ -77,22 +88,17 @@ func (w *World) AddJoint(bodyA, bodyB data.Key, offsetA, offsetB geom.Vec2[float
 	})
 }
 
-func (w *World) ApplyImpulse(key data.Key, mag geom.Ori2[float64]) {
-	index := w.bodies.GetIndex(key)
-	w.applyImpulse(index, mag)
+func (w *World) AddDragPlate(body data.Key, point0, point1 geom.Vec2[float64]) {
+	w.dragPlates.Append(dragPlate{
+		bodyKey: body,
+		point:   [2]geom.Vec2[float64]{point0, point1},
+	})
 }
 
 /*
-Apply a force with an offset to a body.
-
-	 offset
-	 ^----->Fmag
-	/
-
-O-V Ftorque
-mass
+Apply a force with an offset to a body over a period of time.
 */
-func (w *World) ApplyForce(key data.Key, fMag, offset geom.Vec2[float64], dt float64) {
+func (w *World) ApplyImpulse(key data.Key, fMag, offset geom.Vec2[float64], dt float64) {
 	// Ftorque = offset X F
 	// a = f / m
 	// dv = a * dt

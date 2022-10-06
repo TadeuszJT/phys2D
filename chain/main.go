@@ -78,9 +78,13 @@ func draw(w *gfx.Win, c gfx.Canvas) {
 
 			mousePos64 := geom.Vec2Convert[float32, float64](mousePos)
 			delta := mousePos64.Minus(ori1[0].Vec2())
-			deltaOri2 := geom.Ori2[float64]{delta.X, delta.Y, 0}
 
-			world.ApplyImpulse(rects.physKeys[index], deltaOri2.ScaledBy(10))
+			world.ApplyImpulse(
+                rects.physKeys[index],
+                delta.ScaledBy(100),
+                geom.Vec2[float64]{},
+                timeStep,
+            )
 
 		}
 

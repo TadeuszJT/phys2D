@@ -10,10 +10,10 @@ import (
 )
 
 var (
-	rectSize = geom.RectCentred[float32](100, 50)
-	numRects = 4
+	rectSize = geom.RectCentred[float32](200, 50)
+	numRects = 1
 	timeStep = 1. / 60.
-    timeMul  = 10
+	timeMul  = 4
 
 	world    = phys2D.NewWorld()
 	mousePos geom.Vec2[float32]
@@ -24,14 +24,13 @@ var (
 		colours  data.RowT[gfx.Colour]
 	}
 
-	rectKeys data.RowT[data.Key]
-	rectHeld = data.KeyInvalid
-    rectHeldOffset geom.Vec2[float64]
+	rectKeys       data.RowT[data.Key]
+	rectHeld       = data.KeyInvalid
+	rectHeldOffset geom.Vec2[float64]
 )
 
 func init() {
 	rects.KeyMap = data.MakeKeyMap(data.Table{&rects.physKeys, &rects.colours})
-    world.Gravity = geom.Ori2[float64]{}
 }
 
 func deleteRect(keyIndex int) {
@@ -46,50 +45,71 @@ func deleteRect(keyIndex int) {
 }
 
 func setup(w *gfx.Win) error {
+	world.AirDensity = 0.2
+
 	for i := 0; i < numRects; i++ {
 		rectSize64 := geom.RectConvert[float32, float64](rectSize)
 
 		mass := phys2D.MassRectangle(rectSize64)
-		ori := geom.Ori2[float64]{
-            300 + float64(i)*rectSize64.Width(),
-            60 + float64(i)*rectSize64.Height(),
-            0,
-        }
+		ori := geom.Ori2[float64]{200, 200, 0}
 
-		rectKeys.Append(rects.Append(world.AddBody(ori, mass), gfx.ColourRand()))
+		bodyKey := world.AddBody(ori, mass)
 
-		if i > 0 {
-			world.AddJoint(rects.physKeys[i-1], rects.physKeys[i], rectSize64.Max, rectSize64.Min)
+		rectKeys.Append(rects.Append(bodyKey, gfx.ColourRand()))
+
+		verts := [4]geom.Vec2[float64]{
+			{rectSize64.Min.X, rectSize64.Min.Y}, // top left
+			{rectSize64.Max.X, rectSize64.Min.Y}, // top right
+			{rectSize64.Min.X, rectSize64.Max.Y}, // bottom left
+			{rectSize64.Max.X, rectSize64.Max.Y}, // bottom right
 		}
+
+		world.AddDragPlate(bodyKey, verts[0], verts[1])
+		world.AddDragPlate(bodyKey, verts[1], verts[3])
+		world.AddDragPlate(bodyKey, verts[3], verts[2])
+		world.AddDragPlate(bodyKey, verts[2], verts[0])
+
 	}
 
 	return nil
 }
 
 func draw(w *gfx.Win, c gfx.Canvas) {
-    for i := 0; i < timeMul; i++ {
-        if rectHeld != data.KeyInvalid {
-            index := rects.GetIndex(rectHeld)
-            ori1 := world.GetOrientations(rects.physKeys[index])
-            ori := ori1[0]
+	for i := 0; i < timeMul; i++ {
+		if rectHeld != data.KeyInvalid {
+			index := rects.GetIndex(rectHeld)
+			ori1 := world.GetOrientations(rects.physKeys[index])
+			ori := ori1[0]
 
-            mousePos64 := geom.Vec2Convert[float32, float64](mousePos)
-            offset := rectHeldOffset.RotatedBy(ori.Theta)
-            force := mousePos64.Minus(ori.Vec2().Plus(offset))
+			mousePos64 := geom.Vec2Convert[float32, float64](mousePos)
+			offset := rectHeldOffset.RotatedBy(ori.Theta)
+			force := mousePos64.Minus(ori.Vec2().Plus(offset))
 
+			world.ApplyImpulse(rects.physKeys[index], force.ScaledBy(1000), offset, timeStep)
 
-            world.ApplyForce(rects.physKeys[index], force.ScaledBy(1000), offset, timeStep)
+		}
 
-        }
-
-        world.Update(timeStep)
-    }
+		world.Update(timeStep)
+	}
 
 	for i := range rects.physKeys {
 		ori := world.GetOrientations(rects.physKeys[i])
 		ori32 := geom.Ori2Convert[float64, float32](ori[0])
 		colour := rects.colours[i]
 		gfx.DrawSprite(c, ori32, rectSize, colour, nil, nil)
+	}
+
+	if rectHeld != data.KeyInvalid {
+		index := rects.GetIndex(rectHeld)
+		ori1 := world.GetOrientations(rects.physKeys[index])
+		ori := ori1[0]
+
+		offset := rectHeldOffset.RotatedBy(ori.Theta)
+		start := geom.Vec2Convert[float64, float32](ori.Vec2().Plus(offset))
+		end := mousePos
+		mat := geom.Mat3Identity[float32]()
+
+		gfx.Draw2DArrow(c, start, end, gfx.Red, 10, mat)
 	}
 }
 
@@ -103,9 +123,9 @@ func mouse(w *gfx.Win, ev gfx.MouseEvent) {
 				i := rects.GetIndex(key)
 
 				oris := world.GetOrientations(rects.physKeys[i])
-                ori := oris[0]
-                rectSize64 := geom.RectConvert[float32, float64](rectSize)
-                mousePos64 := geom.Vec2Convert[float32, float64](mousePos)
+				ori := oris[0]
+				rectSize64 := geom.RectConvert[float32, float64](rectSize)
+				mousePos64 := geom.Vec2Convert[float32, float64](mousePos)
 
 				trans := geom.Mat3Translation(ori.Vec2().ScaledBy(-1))
 				rot := geom.Mat3Rotation(ori.Theta * (-1))
@@ -115,7 +135,7 @@ func mouse(w *gfx.Win, ev gfx.MouseEvent) {
 				if rectSize64.Contains(v) {
 					if e.Button == glfw.MouseButtonLeft {
 						rectHeld = key
-                        rectHeldOffset = v
+						rectHeldOffset = v
 					} else if e.Button == glfw.MouseButtonRight {
 						deleteRect(i)
 					}
