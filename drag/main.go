@@ -90,6 +90,19 @@ func draw(w *gfx.Win, c gfx.Canvas) {
 		}
 
 		world.Update(timeStep)
+
+
+//        for _, imp := range phys2D.Impulses {
+//            ori := world.GetOrientations(imp.Key)
+//
+//            start := ori[0].Vec2().Plus(imp.Offset)
+//            start32 := geom.Vec2Convert[float64, float32](start)
+//            force32 := geom.Vec2Convert[float64, float32](imp.F)
+//            mat := geom.Mat3Identity[float32]()
+//
+//            gfx.Draw2DArrow(c, start32, start32.Plus(force32.ScaledBy(0.02)), gfx.Blue, 4, mat)
+//        }
+//        phys2D.Impulses = []phys2D.Impulse{}
 	}
 
 	for i := range rects.physKeys {

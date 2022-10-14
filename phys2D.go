@@ -5,6 +5,16 @@ import (
 	"github.com/tadeuszjt/geom/generic"
 )
 
+
+//type Impulse struct{
+//    F, Offset geom.Vec2[float64]
+//    Key data.Key
+//}
+//
+//var (
+//    Impulses []Impulse
+//)
+
 type joint struct {
 	bodyKey [2]data.Key
 	offset  [2]geom.Vec2[float64]
@@ -106,6 +116,12 @@ func (w *World) ApplyImpulse(key data.Key, fMag, offset geom.Vec2[float64], dt f
 	fOri := geom.Ori2[float64]{fMag.X, fMag.Y, offset.Cross(fMag)}
 	accel := fOri.Times(w.bodies.invMass[index])
 	w.bodies.velocity[index].PlusEquals(accel.ScaledBy(dt))
+
+//    Impulses = append(Impulses, Impulse{
+//        F: fMag,
+//        Offset: offset,
+//        Key: key,
+//    })
 }
 
 func (w *World) SetOrientations(keys []data.Key, orientations []geom.Ori2[float64]) {
