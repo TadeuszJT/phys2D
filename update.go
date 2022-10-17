@@ -5,7 +5,6 @@ import (
 	"github.com/tadeuszjt/geom/generic"
 )
 
-
 func (w *World) applyImpulse(index int, mag geom.Ori2[float64]) {
 	w.bodies.velocity[index].PlusEquals(w.bodies.invMass[index].Times(mag))
 }
@@ -31,23 +30,23 @@ func (w *World) Update(dt float64) {
 		bodyOrientation := w.bodies.orientation[bodyIndex]
 		bodyVelocity := w.bodies.velocity[bodyIndex]
 
-        p0 := plate.point[0].RotatedBy(bodyOrientation.Theta)
-        p1 := plate.point[1].RotatedBy(bodyOrientation.Theta)
-        V := bodyVelocity.Vec2()
-        W := bodyVelocity.Theta
-        d := p1.Minus(p0)
-        S := d.Perpendicular()
-        lenS := S.Len()
+		p0 := plate.point[0].RotatedBy(bodyOrientation.Theta)
+		p1 := plate.point[1].RotatedBy(bodyOrientation.Theta)
+		V := bodyVelocity.Vec2()
+		W := bodyVelocity.Theta
+		d := p1.Minus(p0)
+		S := d.Perpendicular()
+		lenS := S.Len()
 
-        // Fp = S * (1/2||S||)||Vp||Vp.S
-        NumSections := 6
-        for i := 0; i < NumSections; i++ {
-            p := p0.Plus(d.ScaledBy((float64(i) + 0.5) / float64(NumSections)))
-            Vp := V.Plus(p.Perpendicular().ScaledBy(W))
-            scalar := (1. / (lenS * float64(NumSections))) * Vp.Len() * Vp.Dot(S)
-            F := S.ScaledBy(-scalar * w.AirDensity)
-            w.ApplyImpulse(plate.bodyKey, F, p, dt)
-        }
+		// Fp = S * (1/2||S||)||Vp||Vp.S
+		NumSections := 6
+		for i := 0; i < NumSections; i++ {
+			p := p0.Plus(d.ScaledBy((float64(i) + 0.5) / float64(NumSections)))
+			Vp := V.Plus(p.Perpendicular().ScaledBy(W))
+			scalar := (1. / (lenS * float64(NumSections))) * Vp.Len() * Vp.Dot(S)
+			F := S.ScaledBy(-scalar * w.AirDensity)
+			w.ApplyImpulse(plate.bodyKey, F, p, dt)
+		}
 	}
 
 	/* Precompute constraints */

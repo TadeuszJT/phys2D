@@ -5,7 +5,6 @@ import (
 	"github.com/tadeuszjt/geom/generic"
 )
 
-
 //type Impulse struct{
 //    F, Offset geom.Vec2[float64]
 //    Key data.Key
@@ -117,11 +116,11 @@ func (w *World) ApplyImpulse(key data.Key, fMag, offset geom.Vec2[float64], dt f
 	accel := fOri.Times(w.bodies.invMass[index])
 	w.bodies.velocity[index].PlusEquals(accel.ScaledBy(dt))
 
-//    Impulses = append(Impulses, Impulse{
-//        F: fMag,
-//        Offset: offset,
-//        Key: key,
-//    })
+	//	Impulses = append(Impulses, Impulse{
+	//	    F: fMag,
+	//	    Offset: offset,
+	//	    Key: key,
+	//	})
 }
 
 func (w *World) SetOrientations(keys []data.Key, orientations []geom.Ori2[float64]) {
@@ -131,13 +130,9 @@ func (w *World) SetOrientations(keys []data.Key, orientations []geom.Ori2[float6
 	}
 }
 
-func (w *World) GetOrientations(keys ...data.Key) []geom.Ori2[float64] {
-	orientations := make([]geom.Ori2[float64], len(keys))
-	for i := range keys {
-		index := w.bodies.GetIndex(keys[i])
-		orientations[i] = w.bodies.orientation[index]
-	}
-	return orientations
+func (w *World) GetOrientation(key data.Key) geom.Ori2[float64] {
+	index := w.bodies.GetIndex(key)
+	return w.bodies.orientation[index]
 }
 
 func (w *World) SetVelocities(keys []data.Key, velocities []geom.Ori2[float64]) {
