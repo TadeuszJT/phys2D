@@ -74,17 +74,17 @@ func draw(w *gfx.Win, c gfx.Canvas) {
 	for i := 0; i < timeMul; i++ {
 		if rectHeld != data.KeyInvalid {
 			index := rects.GetIndex(rectHeld)
-			ori1 := world.GetOrientations(rects.physKeys[index])
+			ori1 := world.GetOrientation(rects.physKeys[index])
 
 			mousePos64 := geom.Vec2Convert[float32, float64](mousePos)
-			delta := mousePos64.Minus(ori1[0].Vec2())
+			delta := mousePos64.Minus(ori1.Vec2())
 
 			world.ApplyImpulse(
-                rects.physKeys[index],
-                delta.ScaledBy(100),
-                geom.Vec2[float64]{},
-                timeStep,
-            )
+				rects.physKeys[index],
+				delta.ScaledBy(100),
+				geom.Vec2[float64]{},
+				timeStep,
+			)
 
 		}
 
@@ -92,8 +92,8 @@ func draw(w *gfx.Win, c gfx.Canvas) {
 	}
 
 	for i := range rects.physKeys {
-		ori := world.GetOrientations(rects.physKeys[i])
-		ori32 := geom.Ori2Convert[float64, float32](ori[0])
+		ori := world.GetOrientation(rects.physKeys[i])
+		ori32 := geom.Ori2Convert[float64, float32](ori)
 		colour := rects.colours[i]
 		gfx.DrawSprite(c, ori32, rectSize, colour, nil, nil)
 	}
@@ -108,12 +108,12 @@ func mouse(w *gfx.Win, ev gfx.MouseEvent) {
 			for _, key := range rectKeys {
 				i := rects.GetIndex(key)
 
-				ori := world.GetOrientations(rects.physKeys[i])
-				ori32 := geom.Ori2Convert[float64, float32](ori[0])
+				ori := world.GetOrientation(rects.physKeys[i])
+				ori32 := geom.Ori2Convert[float64, float32](ori)
 				trans := geom.Mat3Translation(ori32.Vec2().ScaledBy(-1))
 				rot := geom.Mat3Rotation(ori32.Theta * (-1))
 				mat := rot.Product(trans)
-				v := mat.TimesVec2(mousePos, 1).Vec2()
+				v := mat.TimesVec2(mousePos, 1)
 
 				if rectSize.Contains(v) {
 					if e.Button == glfw.MouseButtonLeft {

@@ -31,7 +31,7 @@ var (
 )
 
 func init() {
-	centroid := geom.PolyCentroid(poly)
+	centroid := poly.Centroid()
 	for i := range poly {
 		poly[i] = poly[i].Minus(centroid)
 	}
@@ -47,8 +47,8 @@ func init() {
 
 	world.AirDensity = 0.2
 	world.Gravity = geom.Ori2[float64]{0, 1, 0}
-	massXY := float64(geom.PolyArea(poly))
-	massTheta := float64(geom.PolyMomentOfInertia(poly))
+	massXY := float64(poly.Area())
+	massTheta := float64(poly.MomentOfInertia())
 	fmt.Println(massXY, massTheta)
 	polyOri := geom.Ori2[float32]{4, 4, 1.1}
 	ori64 := geom.Ori2Convert[float32, float64](polyOri)
@@ -87,8 +87,8 @@ func draw(w *gfx.Win, c gfx.Canvas) {
 
 	if mousePolyHeld {
 		displayToCam := geom.Mat3Camera2D(winRect, camRect)
-		mouseWorld := displayToCam.TimesVec2(mousePos, 1).Vec2()
-		start := modelMat.TimesVec2(mousePolyHeldOffset, 1).Vec2()
+		mouseWorld := displayToCam.TimesVec2(mousePos, 1)
+		start := modelMat.TimesVec2(mousePolyHeldOffset, 1)
 		end := mouseWorld
 		gfx.Draw2DArrow(c, start, end, gfx.Green, 0.1, camMat)
 
@@ -120,7 +120,7 @@ func mouse(w *gfx.Win, ev gfx.MouseEvent) {
 				trans := geom.Mat3Translation(polyOri.Vec2().ScaledBy(-1))
 				rot := geom.Mat3Rotation(-polyOri.Theta)
 				displayToModel := rot.Product(trans).Product(displayToCam)
-				mouseModel := displayToModel.TimesVec2(mousePos, 1).Vec2()
+				mouseModel := displayToModel.TimesVec2(mousePos, 1)
 
 				if poly.Contains(mouseModel) {
 					mousePolyHeld = true

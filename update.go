@@ -62,8 +62,8 @@ func (w *World) Update(dt float64) {
 		o1 := w.bodies.orientation[index1]
 
 		// joint world positions
-		p0 := o0.Mat3Transform().TimesVec2(joint.offset[0], 1).Vec2()
-		p1 := o1.Mat3Transform().TimesVec2(joint.offset[1], 1).Vec2()
+		p0 := o0.Mat3Transform().TimesVec2(joint.offset[0], 1)
+		p1 := o1.Mat3Transform().TimesVec2(joint.offset[1], 1)
 
 		// joint separation
 		d := p0.Minus(p1)
